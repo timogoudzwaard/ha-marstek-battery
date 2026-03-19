@@ -193,34 +193,43 @@ You are an expert Python developer and a core contributor to Home Assistant. You
 ```
 MarstekBattery/                          # GitHub repository root
 ├── .github/
-│   └── instructions.md                  # This file — project instructions for Copilot
+│   └── copilot-instructions.md          # This file — project instructions for Copilot
+├── .gitignore
+├── README.md                            # User-facing documentation
 ├── hacs.json                            # HACS metadata
+├── pyproject.toml                       # Project config, pytest, ruff settings
 ├── custom_components/
 │   └── marstek_battery/
 │       ├── __init__.py                  # Integration setup, coordinator init, platform forwarding
 │       ├── manifest.json                # HA integration manifest
-│       ├── config_flow.py               # UI config: IP + port input, UDP validation, unique ID
-│       ├── coordinator.py               # DataUpdateCoordinator — UDP polling cycle
+│       ├── config_flow.py               # UI config: discovery + manual IP, options flow for poll rate
+│       ├── coordinator.py               # DataUpdateCoordinator — polls ES.GetStatus
 │       ├── api.py                       # Async UDP client — JSON-RPC send/receive, protocol logic
-│       ├── const.py                     # DOMAIN, defaults, API method names, entity descriptions
+│       ├── const.py                     # DOMAIN, defaults, API method names
 │       ├── entity.py                    # MarstekEntity base class (CoordinatorEntity + device_info)
-│       ├── sensor.py                    # ~19 sensor entities
-│       ├── binary_sensor.py             # 3 binary sensor entities
-│       ├── select.py                    # Operating mode select entity
-│       ├── number.py                    # DOD + passive power/countdown number entities
-│       ├── switch.py                    # LED + Bluetooth switch entities
+│       ├── sensor.py                    # 4 sensor entities (v1: SOC, power, grid input/output energy)
 │       ├── strings.json                 # UI strings for config flow (English)
 │       └── translations/
-│           ├── en.json                  # English translations
-│           └── nl.json                  # Dutch translations
+│           └── en.json                  # English translations
+├── documents/
+│   └── marstek-device-open-api.txt      # Official Marstek Open API documentation (Rev 2.0)
 └── tests/
+    ├── __init__.py
     ├── conftest.py                      # Shared fixtures, mock UDP transport
-    ├── test_config_flow.py              # Config flow tests (full coverage required)
+    ├── test_config_flow.py              # Config flow tests
     ├── test_coordinator.py              # Coordinator polling + error handling tests
     ├── test_api.py                      # UDP client unit tests
-    ├── test_sensor.py                   # Sensor entity tests
-    └── ...
+    └── test_sensor.py                   # Sensor entity tests
 ```
+
+### Future files (not yet implemented)
+
+| File               | Purpose                                            |
+| ------------------ | -------------------------------------------------- |
+| `binary_sensor.py` | Charging/discharging flags, CT connected           |
+| `select.py`        | Operating mode select (Auto/AI/Manual/Passive/Ups) |
+| `number.py`        | DOD, passive mode power/countdown                  |
+| `switch.py`        | LED and Bluetooth switches                         |
 
 ---
 
@@ -299,33 +308,27 @@ MarstekBattery/                          # GitHub repository root
 
 ## Coordinator Strategy
 
-### Polling Cycle (~30 seconds)
+### Current Implementation (v1)
 
-Each coordinator refresh calls these API methods in sequence:
+The coordinator polls **only `ES.GetStatus`** per cycle — all 4 v1 sensors come from this single API call. This minimizes network traffic and latency.
+
+```python
+coordinator.data = {
+    "es_status": { ... },     # ES.GetStatus response (every poll cycle)
+    "device_info": { ... },   # Marstek.GetDevice response (fetched once at setup)
+}
+```
+
+### Future Polling (when more sensors are added)
+
+Expand `_async_update_data()` to call these in sequence:
 
 1. `ES.GetStatus` — energy system data (powers, energies, SOC)
 2. `Bat.GetStatus` — battery details (temp, capacity, charge/discharge flags)
 3. `EM.GetStatus` — energy meter / CT data (phase powers, cumulative energy)
 4. `ES.GetMode` — current operating mode + live grid data
 
-### Less Frequent Polling (~5 minutes)
-
-- `Wifi.GetStatus` — WiFi RSSI (use a counter or secondary coordinator)
-
-### Data Structure
-
-Store all API responses in a single `dict` on the coordinator:
-
-```python
-coordinator.data = {
-    "es_status": { ... },     # ES.GetStatus response
-    "bat_status": { ... },    # Bat.GetStatus response
-    "em_status": { ... },     # EM.GetStatus response
-    "es_mode": { ... },       # ES.GetMode response
-    "wifi_status": { ... },   # Wifi.GetStatus response
-    "device_info": { ... },   # Marstek.GetDevice response (fetched once at setup)
-}
-```
+Less frequent (~5 minutes): `Wifi.GetStatus` for WiFi RSSI.
 
 ### Error Handling in Coordinator
 
@@ -346,16 +349,16 @@ coordinator.data = {
 4. Call `self._abort_if_unique_id_configured(updates={CONF_HOST: host, CONF_PORT: port})` to handle IP changes.
 5. Create config entry with `data = {CONF_HOST: host, CONF_PORT: port}`.
 
-### Optional: UDP Broadcast Discovery
+### UDP Broadcast Discovery (implemented in v1)
 
-- Send `Marstek.GetDevice` as UDP broadcast to `255.255.255.255:30000`.
-- Parse responses to auto-discover devices on the network.
-- Nice-to-have for v1.1, not required for v1.0.
+- On integration add, first tries UDP broadcast `Marstek.GetDevice` to `255.255.255.255:30000`.
+- If devices are found, presents a list to pick from.
+- Falls back to manual IP+port entry if no devices discovered.
 
-### Options Flow (optional, v1.1)
+### Options Flow (implemented in v1)
 
-- Allow changing polling interval (default 30s).
-- Allow enabling/disabling specific entity groups.
+- Allows changing polling interval (default 30s, range 10–300s).
+- Integration reloads automatically when options change.
 
 ---
 
@@ -430,6 +433,19 @@ class MarstekUDPClient:
 
 ---
 
+## Device Quirks (Verified on Venus E 3.0, firmware v144)
+
+These were discovered by probing the real device and are **critical** for correct implementation:
+
+1. **`bat_power` is NOT returned** by `ES.GetStatus` on Venus E 3.0 — use `ongrid_power` for current power flow instead.
+2. **Method names are case-sensitive** — `ES.GetStatus` works, `es.GetStatus` returns `-32601 Method not found`.
+3. **`params` must include `"id": 0`** — sending `{}` or `{"id": null}` returns `-32602 Invalid params`.
+4. **First UDP packet after idle may time out** — the retry mechanism (1 retry after 5s timeout) handles this reliably.
+5. **`src` field format:** `"VenusE 3.0-a8dd9fd8e707"` (includes space in model name).
+6. **Broadcast discovery** may not work on all platforms (e.g., Windows firewall blocks it) — manual IP entry is the reliable fallback.
+
+---
+
 ## Task Instructions
 
 When I ask you to write or modify code:
@@ -438,3 +454,4 @@ When I ask you to write or modify code:
 2. Provide the complete code block for the specific file.
 3. If modifying a large existing file, show only the relevant updated sections but ensure context is clear.
 4. Always check that the code is consistent with the architecture described in this document (UDP protocol, coordinator pattern, entity base class, etc.).
+5. **Verify against the device quirks above** — don't assume `bat_power` exists, don't use lowercase method names, always send `{"id": 0}` in params.

@@ -1,0 +1,59 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Marstek Battery",
+        "description": "Searching for Marstek devices on your network..."
+      },
+      "pick_device": {
+        "title": "Select Device",
+        "description": "Select a discovered Marstek device or enter the IP address manually.",
+        "data": {
+          "device": "Device"
+        }
+      },
+      "manual": {
+        "title": "Connect to Marstek Battery",
+        "description": "Enter the IP address and UDP port of your Marstek device. The Open API must be enabled in the Marstek app first.",
+        "data": {
+          "host": "IP Address",
+          "port": "UDP Port"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to device. Verify IP, port, and that the Open API is enabled.",
+      "invalid_ip": "Only private/local IP addresses are allowed.",
+      "unknown": "An unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "This device is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Marstek Battery Options",
+        "data": {
+          "scan_interval": "Poll interval (seconds)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery_soc": {
+        "name": "Battery SOC"
+      },
+      "battery_power": {
+        "name": "Battery Power"
+      },
+      "total_grid_input_energy": {
+        "name": "Total Input Energy"
+      },
+      "total_grid_output_energy": {
+        "name": "Total Output Energy"
+      }
+    }
+  }
+}

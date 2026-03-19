@@ -1,0 +1,13 @@
+{
+  "domain": "marstek_battery",
+  "name": "Marstek Battery",
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/YOUR_USERNAME/MarstekBattery",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/YOUR_USERNAME/MarstekBattery/issues",
+  "requirements": [],
+  "version": "1.0.0"
+}
