@@ -16,14 +16,18 @@ A custom [Home Assistant](https://www.home-assistant.io/) integration for **Mars
 
 ### Sensors
 
-| Sensor                  | Unit | Description                                         |
-| ----------------------- | ---- | --------------------------------------------------- |
-| **Battery SOC**         | %    | Current battery charge level                        |
-| **Battery Power**       | W    | Current charge/discharge power (grid-tied power)    |
-| **Total Input Energy**  | Wh   | Cumulative energy charged from the grid (lifetime)  |
-| **Total Output Energy** | Wh   | Cumulative energy discharged to the grid (lifetime) |
+| Sensor                      | Unit | Description                                                |
+| --------------------------- | ---- | ---------------------------------------------------------- |
+| **Battery SOC**             | %    | Current battery charge level                               |
+| **Battery Power**           | W    | Current charge/discharge power (grid-tied power)           |
+| **Total Input Energy**      | Wh   | Cumulative energy charged from the grid (lifetime)         |
+| **Total Output Energy**     | Wh   | Cumulative energy discharged to the grid (lifetime)        |
+| **Energy Charged Today**    | Wh   | Energy charged today — resets at midnight automatically    |
+| **Energy Discharged Today** | Wh   | Energy discharged today — resets at midnight automatically |
 
-The energy sensors use Home Assistant's `total_increasing` state class, which means you can create **Utility Meter helpers** to track daily/weekly/monthly energy automatically.
+The lifetime energy sensors use Home Assistant's `total_increasing` state class, which means you can also create **Utility Meter helpers** for weekly/monthly tracking.
+
+The daily energy sensors use built-in **trapezoidal Riemann Sum integration** on the power sensor and reset at midnight automatically — no manual helper setup needed. Values survive Home Assistant restarts.
 
 ---
 
@@ -77,21 +81,24 @@ Go to **Settings → Devices & Services → Marstek Battery → Configure** to a
 
 ---
 
-## Tracking Daily Energy (Charged / Discharged Today)
+## Daily Energy Tracking
 
-The integration provides **cumulative** (lifetime) energy values. To track **daily** energy:
+The integration includes **Energy Charged Today** and **Energy Discharged Today** sensors that track daily energy automatically. These sensors:
+
+- Use **trapezoidal Riemann Sum integration** on the real-time power sensor for accurate tracking
+- **Reset at midnight** automatically
+- **Survive Home Assistant restarts** (values are restored)
+- Are compatible with the **Energy Dashboard** (`device_class=energy`, `state_class=total_increasing`)
+
+No manual Utility Meter setup is needed for daily tracking.
+
+### Weekly / Monthly Tracking
+
+For weekly or monthly tracking, create **Utility Meter helpers** on the lifetime cumulative sensors:
 
 1. Go to **Settings → Devices & Services → Helpers → Create Helper → Utility Meter**
-2. Create two Utility Meters:
-
-   | Name                    | Input sensor                               | Cycle     |
-   | ----------------------- | ------------------------------------------ | --------- |
-   | Energy Charged Today    | `sensor.<device>_total_grid_input_energy`  | **Daily** |
-   | Energy Discharged Today | `sensor.<device>_total_grid_output_energy` | **Daily** |
-
-3. These helpers automatically reset at midnight and show energy charged/discharged per day
-
-You can also create weekly or monthly meters the same way.
+2. Use `sensor.<device>_total_grid_input_energy` or `sensor.<device>_total_grid_output_energy` as input
+3. Set the cycle to **Weekly** or **Monthly**
 
 ## Tested On
 

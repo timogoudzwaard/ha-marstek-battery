@@ -1,0 +1,24 @@
+{
+  "entity": {
+    "sensor": {
+      "battery_soc": {
+        "default": "mdi:battery"
+      },
+      "battery_power": {
+        "default": "mdi:flash"
+      },
+      "total_grid_input_energy": {
+        "default": "mdi:transmission-tower-import"
+      },
+      "total_grid_output_energy": {
+        "default": "mdi:transmission-tower-export"
+      },
+      "energy_charged_today": {
+        "default": "mdi:battery-charging"
+      },
+      "energy_discharged_today": {
+        "default": "mdi:battery-arrow-down"
+      }
+    }
+  }
+}

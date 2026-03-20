@@ -53,6 +53,12 @@
       },
       "total_grid_output_energy": {
         "name": "Total Output Energy"
+      },
+      "energy_charged_today": {
+        "name": "Energy Charged Today"
+      },
+      "energy_discharged_today": {
+        "name": "Energy Discharged Today"
       }
     }
   }
