@@ -16,14 +16,14 @@ Custom [Home Assistant](https://www.home-assistant.io/) integration for **Marste
 
 ## Sensors
 
-| Sensor | Unit | Description |
-| --- | --- | --- |
-| Battery SOC | % | Current battery charge level |
-| Battery Power | W | Current charge / discharge power |
-| Total Input Energy | Wh | Cumulative energy charged (lifetime) |
-| Total Output Energy | Wh | Cumulative energy discharged (lifetime) |
-| Energy Charged Today | Wh | Energy charged today — resets at midnight |
-| Energy Discharged Today | Wh | Energy discharged today — resets at midnight |
+| Sensor                  | Unit | Description                                  |
+| ----------------------- | ---- | -------------------------------------------- |
+| Battery SOC             | %    | Current battery charge level                 |
+| Battery Power           | W    | Current charge / discharge power             |
+| Total Input Energy      | Wh   | Cumulative energy charged (lifetime)         |
+| Total Output Energy     | Wh   | Cumulative energy discharged (lifetime)      |
+| Energy Charged Today    | Wh   | Energy charged today — resets at midnight    |
+| Energy Discharged Today | Wh   | Energy discharged today — resets at midnight |
 
 > The daily energy sensors reset automatically at midnight and survive Home Assistant restarts.
 
@@ -91,12 +91,12 @@ The integration communicates with your battery using the Marstek Open API. This 
 
 ## Troubleshooting
 
-| Problem | Solution |
-| --- | --- |
-| Integration not found after install | Restart Home Assistant and clear your browser cache |
-| "Cannot connect to device" | Check that the Open API is enabled, verify the IP address and port |
-| No devices discovered | Your router/firewall may block UDP broadcast — use manual IP entry instead |
-| Sensors show "Unavailable" | The battery may be in standby or unreachable — check your network connection |
+| Problem                             | Solution                                                                     |
+| ----------------------------------- | ---------------------------------------------------------------------------- |
+| Integration not found after install | Restart Home Assistant and clear your browser cache                          |
+| "Cannot connect to device"          | Check that the Open API is enabled, verify the IP address and port           |
+| No devices discovered               | Your router/firewall may block UDP broadcast — use manual IP entry instead   |
+| Sensors show "Unavailable"          | The battery may be in standby or unreachable — check your network connection |
 
 For detailed logs, go to **Settings → System → Logs** and filter for `marstek_battery`.
 
