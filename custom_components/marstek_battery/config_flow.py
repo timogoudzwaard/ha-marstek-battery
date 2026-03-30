@@ -7,20 +7,18 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-
 from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
     OptionsFlow,
 )
+from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import callback
 from homeassistant.helpers.device_registry import format_mac
 
 from .api import MarstekUDPClient, MarstekUDPError
 from .const import (
-    CONF_HOST,
-    CONF_PORT,
     DEFAULT_PORT,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
@@ -53,7 +51,7 @@ class MarstekConfigFlow(ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(config_entry: ConfigEntry) -> MarstekOptionsFlow:
         """Return the options flow handler."""
-        return MarstekOptionsFlow(config_entry)
+        return MarstekOptionsFlow()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -178,10 +176,6 @@ class MarstekConfigFlow(ConfigFlow, domain=DOMAIN):
 class MarstekOptionsFlow(OptionsFlow):
     """Handle options for Marstek Battery."""
 
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize options flow."""
-        self._config_entry = config_entry
-
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -189,7 +183,7 @@ class MarstekOptionsFlow(OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(data=user_input)
 
-        current_interval = self._config_entry.options.get(
+        current_interval = self.config_entry.options.get(
             "scan_interval", DEFAULT_SCAN_INTERVAL
         )
 

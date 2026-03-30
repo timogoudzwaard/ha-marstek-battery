@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -125,7 +125,7 @@ class TestMarstekDailyEnergySensor:
     def test_discharge_accumulates_positive_power(self):
         """Test discharge sensor accumulates when ongrid_power > 0."""
         sensor = _make_daily_sensor("discharge")
-        now = datetime(2026, 3, 19, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 19, 12, 0, 0, tzinfo=UTC)
         later = now + timedelta(seconds=30)
 
         # First update — just records power + time, no accumulation
@@ -151,7 +151,7 @@ class TestMarstekDailyEnergySensor:
             DATA_DEVICE_INFO: MOCK_DEVICE_INFO,
         }
         sensor = _make_daily_sensor("charge", data)
-        now = datetime(2026, 3, 19, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 19, 12, 0, 0, tzinfo=UTC)
         later = now + timedelta(seconds=60)
 
         with patch("custom_components.marstek_battery.sensor.dt_util") as mock_dt:
@@ -172,7 +172,7 @@ class TestMarstekDailyEnergySensor:
             DATA_DEVICE_INFO: MOCK_DEVICE_INFO,
         }
         sensor = _make_daily_sensor("discharge", data)
-        now = datetime(2026, 3, 19, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 19, 12, 0, 0, tzinfo=UTC)
         later = now + timedelta(seconds=60)
 
         with patch("custom_components.marstek_battery.sensor.dt_util") as mock_dt:
@@ -188,7 +188,7 @@ class TestMarstekDailyEnergySensor:
     def test_charge_ignores_positive_power(self):
         """Test charge sensor does NOT accumulate when power is positive."""
         sensor = _make_daily_sensor("charge")  # ongrid_power=698 in mock
-        now = datetime(2026, 3, 19, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 19, 12, 0, 0, tzinfo=UTC)
         later = now + timedelta(seconds=60)
 
         with patch("custom_components.marstek_battery.sensor.dt_util") as mock_dt:
@@ -205,7 +205,7 @@ class TestMarstekDailyEnergySensor:
         """Test that _async_reset_daily resets the accumulator."""
         sensor = _make_daily_sensor("discharge")
         sensor._accumulated = 1234.56
-        now = datetime(2026, 3, 20, 0, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 20, 0, 0, 0, tzinfo=UTC)
 
         with patch("custom_components.marstek_battery.sensor.dt_util") as mock_dt:
             mock_dt.now.return_value = now
@@ -236,7 +236,7 @@ class TestMarstekDailyEnergySensor:
     def test_first_update_no_accumulation(self):
         """Test that the first update only records power, no energy added."""
         sensor = _make_daily_sensor("discharge")
-        now = datetime(2026, 3, 19, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 19, 12, 0, 0, tzinfo=UTC)
 
         with patch("custom_components.marstek_battery.sensor.dt_util") as mock_dt:
             mock_dt.utcnow.return_value = now
@@ -249,7 +249,7 @@ class TestMarstekDailyEnergySensor:
     def test_trapezoidal_varying_power(self):
         """Test trapezoidal integration with changing power levels."""
         sensor = _make_daily_sensor("discharge")
-        now = datetime(2026, 3, 19, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 19, 12, 0, 0, tzinfo=UTC)
 
         # First update: 698 W
         with patch("custom_components.marstek_battery.sensor.dt_util") as mock_dt:

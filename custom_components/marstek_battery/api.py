@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 from typing import Any
@@ -50,10 +51,8 @@ class _MarstekProtocol(asyncio.DatagramProtocol):
             return
 
         # Coerce to int for matching (API uses numeric IDs)
-        try:
+        with contextlib.suppress(TypeError, ValueError):
             request_id = int(request_id)
-        except (TypeError, ValueError):
-            pass
 
         future = self._pending.pop(request_id, None)
         if future is not None and not future.done():

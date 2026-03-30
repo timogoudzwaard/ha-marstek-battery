@@ -4,16 +4,12 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from homeassistant import config_entries
+from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
 from custom_components.marstek_battery.const import (
-    CONF_HOST,
-    CONF_PORT,
-    DEFAULT_PORT,
     DOMAIN,
 )
 

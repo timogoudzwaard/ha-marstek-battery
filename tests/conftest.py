@@ -6,10 +6,9 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from homeassistant.const import CONF_HOST, CONF_PORT
 
 from custom_components.marstek_battery.const import (
-    CONF_HOST,
-    CONF_PORT,
     DATA_DEVICE_INFO,
     DATA_ES_STATUS,
     DOMAIN,

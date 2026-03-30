@@ -4,10 +4,6 @@ from __future__ import annotations
 
 DOMAIN = "marstek_battery"
 
-# Config keys
-CONF_HOST = "host"
-CONF_PORT = "port"
-
 # Defaults
 DEFAULT_PORT = 30000
 DEFAULT_SCAN_INTERVAL = 30

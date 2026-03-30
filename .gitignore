@@ -42,3 +42,6 @@ htmlcov/
 # Temporary probe/test scripts
 probe_*.py
 test_live.py
+
+# Ruff
+.ruff_cache/

@@ -13,14 +13,14 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfEnergy, UnitOfPower
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
-from .const import DATA_ES_STATUS, DOMAIN
+from . import MarstekConfigEntry
+from .const import DATA_ES_STATUS
 from .coordinator import MarstekDataUpdateCoordinator
 from .entity import MarstekEntity
 
@@ -77,11 +77,11 @@ DAILY_ENERGY_SENSORS: tuple[tuple[str, str, str], ...] = (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: MarstekConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Marstek sensor entities from a config entry."""
-    coordinator: MarstekDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
 
     entities: list[SensorEntity] = [
         MarstekSensor(coordinator, description)
@@ -224,7 +224,7 @@ class MarstekDailyEnergySensor(MarstekEntity, RestoreSensor):
         now = dt_util.utcnow()
 
         # Effective power for this direction
-        if self._direction == "charge":
+        if self._direction == "charge":  # noqa: SIM108
             effective = max(0.0, -power)
         else:
             effective = max(0.0, power)

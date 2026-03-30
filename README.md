@@ -1,132 +1,113 @@
-# Marstek Battery — Home Assistant Integration
+# Marstek Battery
 
-A custom [Home Assistant](https://www.home-assistant.io/) integration for **Marstek Venus E 3.0** plug-in home batteries. Communicates over the local network using the Marstek Open API (JSON-RPC over UDP) — no cloud, no internet required.
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2025.1%2B-blue.svg)](https://www.home-assistant.io/)
 
-> **Status:** v1.0.0 — read-only sensors. Controls (operating mode, DOD, LED) planned for a future version.
-
----
+Custom [Home Assistant](https://www.home-assistant.io/) integration for **Marstek Venus E 3.0** plug-in home batteries. Communicates entirely over your local network — no cloud, no internet required.
 
 ## Features
 
-- **Local-only communication** — all data stays on your LAN (UDP, no cloud dependency)
-- **Auto-discovery** — finds Marstek devices on your network via UDP broadcast
-- **Manual setup** — enter IP address and port if discovery doesn't work
-- **Configurable poll rate** — default 30 seconds, adjustable from 10 to 300 seconds
-- **Multi-device ready** — each battery gets its own config entry; add as many as you have
+- **100% local** — all communication stays on your LAN, no cloud dependency
+- **Auto-discovery** — automatically finds your Marstek battery on the network
+- **Manual setup** — enter IP and port manually if auto-discovery doesn't work
+- **Adjustable polling** — default every 30 seconds, configurable from 10 to 300 seconds
+- **Multiple devices** — add as many batteries as you have
+- **Energy Dashboard ready** — all energy sensors are compatible with the HA Energy Dashboard
 
-### Sensors
+## Sensors
 
-| Sensor                      | Unit | Description                                                |
-| --------------------------- | ---- | ---------------------------------------------------------- |
-| **Battery SOC**             | %    | Current battery charge level                               |
-| **Battery Power**           | W    | Current charge/discharge power (grid-tied power)           |
-| **Total Input Energy**      | Wh   | Cumulative energy charged from the grid (lifetime)         |
-| **Total Output Energy**     | Wh   | Cumulative energy discharged to the grid (lifetime)        |
-| **Energy Charged Today**    | Wh   | Energy charged today — resets at midnight automatically    |
-| **Energy Discharged Today** | Wh   | Energy discharged today — resets at midnight automatically |
+| Sensor | Unit | Description |
+| --- | --- | --- |
+| Battery SOC | % | Current battery charge level |
+| Battery Power | W | Current charge / discharge power |
+| Total Input Energy | Wh | Cumulative energy charged (lifetime) |
+| Total Output Energy | Wh | Cumulative energy discharged (lifetime) |
+| Energy Charged Today | Wh | Energy charged today — resets at midnight |
+| Energy Discharged Today | Wh | Energy discharged today — resets at midnight |
 
-The lifetime energy sensors use Home Assistant's `total_increasing` state class, which means you can also create **Utility Meter helpers** for weekly/monthly tracking.
+> The daily energy sensors reset automatically at midnight and survive Home Assistant restarts.
 
-The daily energy sensors use built-in **trapezoidal Riemann Sum integration** on the power sensor and reset at midnight automatically — no manual helper setup needed. Values survive Home Assistant restarts.
+## Requirements
 
----
-
-## Prerequisites
-
-1. A **Marstek Venus E 3.0** (or compatible Venus C/E device) connected to your home network via WiFi
-2. The **Open API** must be enabled in the **Marstek mobile app**:
-   - Open the Marstek app → select your device → enable the Open API
-   - Note the **UDP port** (default: `30000`)
-3. **Home Assistant** 2024.12.0 or newer
-4. (Recommended) A **static IP address** for your battery — set a DHCP reservation in your router
-
----
+- **Marstek Venus E 3.0** (or compatible Venus C/E) connected to your WiFi
+- **Open API enabled** in the Marstek mobile app (see [Enabling the Open API](#enabling-the-open-api))
+- **Home Assistant** 2025.1.0 or newer
+- (Recommended) A **static IP** for your battery — set a DHCP reservation in your router
 
 ## Installation
 
-### Option A: HACS (recommended)
+### HACS (recommended)
 
-1. Make sure [HACS](https://hacs.xyz/) is installed in your Home Assistant
-2. In HACS, go to **Integrations** → click the **three dots menu** (top right) → **Custom repositories**
+1. Make sure [HACS](https://hacs.xyz/) is installed
+2. In HACS → **Integrations** → three-dot menu (⋮) → **Custom repositories**
 3. Add this repository URL and select category **Integration**
-4. Search for **"Marstek Battery"** in HACS and install it
+4. Search for **Marstek Battery** and click **Install**
 5. **Restart Home Assistant**
 
-### Option B: Manual
+### Manual
 
 1. Download or clone this repository
-2. Copy the `custom_components/marstek_battery/` folder into your Home Assistant config directory:
+2. Copy `custom_components/marstek_battery/` to your Home Assistant config directory:
    ```
-   <ha-config>/custom_components/marstek_battery/
+   config/custom_components/marstek_battery/
    ```
-   Your config directory is typically `/config/` (Home Assistant OS) or `~/.homeassistant/` (Core).
 3. **Restart Home Assistant**
 
----
-
-## Setup
+## Configuration
 
 1. Go to **Settings → Devices & Services → Add Integration**
-2. Search for **"Marstek Battery"**
-3. The integration will attempt to auto-discover devices on your network
-   - If your device is found, select it from the list
-   - If not, choose **"Enter IP address manually"** and enter:
-     - **IP Address:** your battery's local IP (e.g. `192.168.1.100`)
-     - **UDP Port:** `30000` (or whatever you configured in the Marstek app)
-4. The integration validates the connection and creates the device with 4 sensors
+2. Search for **Marstek Battery**
+3. The integration tries to discover your device automatically
+   - If found, select it from the list
+   - If not, choose **Enter IP address manually** and fill in your battery's IP and UDP port (default `30000`)
+4. Done! The device and sensors will appear automatically
 
-### Changing the poll rate
+### Change the poll interval
 
-Go to **Settings → Devices & Services → Marstek Battery → Configure** to adjust the polling interval (10–300 seconds).
+**Settings → Devices & Services → Marstek Battery → Configure**
 
----
+Adjust the polling interval between 10 and 300 seconds.
 
-## Daily Energy Tracking
+## Energy Dashboard
 
-The integration includes **Energy Charged Today** and **Energy Discharged Today** sensors that track daily energy automatically. These sensors:
+All energy sensors are ready for the Home Assistant **Energy Dashboard** out of the box.
 
-- Use **trapezoidal Riemann Sum integration** on the real-time power sensor for accurate tracking
-- **Reset at midnight** automatically
-- **Survive Home Assistant restarts** (values are restored)
-- Are compatible with the **Energy Dashboard** (`device_class=energy`, `state_class=total_increasing`)
+For **weekly or monthly** tracking, create a **Utility Meter** helper:
 
-No manual Utility Meter setup is needed for daily tracking.
-
-### Weekly / Monthly Tracking
-
-For weekly or monthly tracking, create **Utility Meter helpers** on the lifetime cumulative sensors:
-
-1. Go to **Settings → Devices & Services → Helpers → Create Helper → Utility Meter**
-2. Use `sensor.<device>_total_grid_input_energy` or `sensor.<device>_total_grid_output_energy` as input
+1. **Settings → Devices & Services → Helpers → Create Helper → Utility Meter**
+2. Select one of the lifetime energy sensors as input
 3. Set the cycle to **Weekly** or **Monthly**
 
-## Tested On
+## Enabling the Open API
 
-- **Device:** Marstek Venus E 3.0 (firmware v144)
-- **Home Assistant:** 2024.12+ / 2026.3+
-- **Communication verified:** `Marstek.GetDevice`, `ES.GetStatus`, `Bat.GetStatus`, `EM.GetStatus`, `ES.GetMode`, `Wifi.GetStatus`
+The integration communicates with your battery using the Marstek Open API. This must be enabled first:
 
-### Known device quirks (Venus E 3.0)
+1. Open the **Marstek mobile app**
+2. Select your battery device
+3. Enable the **Open API**
+4. Note the **UDP port** shown (default: `30000`)
 
-- `bat_power` is **not returned** by `ES.GetStatus` — the integration uses `ongrid_power` instead
-- API method names are **case-sensitive** (`ES.GetStatus` works, `es.GetStatus` does not)
-- The `params` object **must** include `"id": 0` — sending `{}` or `null` returns an error
-- The first UDP packet after idle may occasionally time out — the retry mechanism handles this
-
----
+> **Tip:** Make sure your Home Assistant instance and the battery are on the same network (VLAN).
 
 ## Troubleshooting
 
-| Problem                                  | Solution                                                                                                                 |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Integration not found in Add Integration | Make sure you restarted HA after copying the files                                                                       |
-| "Cannot connect to device"               | Verify the Open API is enabled in the Marstek app, check IP and port, ensure HA and battery are on the same network/VLAN |
-| Discovery finds no devices               | UDP broadcast may be blocked by your router/firewall. Use manual IP entry instead                                        |
-| Sensors show "Unavailable"               | The device may be offline or unreachable. Check the HA logs for error details                                            |
-| Energy values seem wrong                 | The API returns cumulative lifetime values. Use Utility Meter helpers for daily tracking                                 |
+| Problem | Solution |
+| --- | --- |
+| Integration not found after install | Restart Home Assistant and clear your browser cache |
+| "Cannot connect to device" | Check that the Open API is enabled, verify the IP address and port |
+| No devices discovered | Your router/firewall may block UDP broadcast — use manual IP entry instead |
+| Sensors show "Unavailable" | The battery may be in standby or unreachable — check your network connection |
 
-Check the Home Assistant logs at **Settings → System → Logs** and filter for `marstek_battery` for detailed debug information.
+For detailed logs, go to **Settings → System → Logs** and filter for `marstek_battery`.
 
-## License
+To enable debug logging, add this to your `configuration.yaml`:
 
-This project is not affiliated with or endorsed by Marstek. The Marstek Open API is provided by Marstek for local use at the device owner's own risk.
+```yaml
+logger:
+  logs:
+    custom_components.marstek_battery: debug
+```
+
+## Disclaimer
+
+This project is not affiliated with or endorsed by Marstek. Use at your own risk.
